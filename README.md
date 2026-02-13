@@ -183,19 +183,7 @@ python run_daily_crawl.py
 
 详见部署脚本 `deploy.sh`
 
-## 🤝 贡献指南
 
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-MIT License
-
-## 📞 联系方式
-
-如有问题，请提交 Issue 或联系维护者。
-
----
 
 **版本**: 1.2.0  
 **最后更新**: 2026-02-14
