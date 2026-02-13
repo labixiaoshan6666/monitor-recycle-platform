@@ -184,6 +184,5 @@ python run_daily_crawl.py
 详见部署脚本 `deploy.sh`
 
 
-
-**版本**: 1.2.0  
+ 
 **最后更新**: 2026-02-14
