@@ -20,14 +20,14 @@
 ### 环境要求
 
 - Python 3.8+
-- Node.js 16+
+- Node.js 20+
 - MySQL 8.0+
 
 ### 安装步骤
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/yourusername/recycle-platform.git
+git clone https://github.com/labixiaoshan6666/recycle-platform.git
 cd recycle-platform
 ```
 
