@@ -27,7 +27,7 @@
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/labixiaoshan6666/recycle-platform.git
+git clone https://github.com/labixiaoshan6666/monitor-recycle-platform.git
 cd recycle-platform
 ```
 
