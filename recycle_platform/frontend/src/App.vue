@@ -245,17 +245,27 @@ const renderChart = () => {
     return
   }
   
-  if (!chartInstance) {
-    console.log('[DEBUG] Initializing new chart instance')
-    chartInstance = echarts.init(chartRef.value)
-  }
-  
   console.log('[DEBUG] renderChart - trendData:', trendData.value)
   
   if (!trendData.value || trendData.value.length === 0) {
     console.warn('[DEBUG] No trend data to render')
+    // 如果没有数据，销毁现有图表
+    if (chartInstance) {
+      chartInstance.dispose()
+      chartInstance = null
+    }
     return
   }
+  
+  // 每次重新创建图表实例，避免复用导致的布局问题
+  if (chartInstance) {
+    console.log('[DEBUG] Disposing old chart instance')
+    chartInstance.dispose()
+    chartInstance = null
+  }
+  
+  console.log('[DEBUG] Initializing new chart instance')
+  chartInstance = echarts.init(chartRef.value)
   
   const dates = trendData.value.map(item => item.date)
   const prices = trendData.value.map(item => item.price)
@@ -279,16 +289,26 @@ const renderChart = () => {
         return ''
       }
     },
-    grid: { left: 60, right: 30, top: 30, bottom: 50 },
+    grid: { 
+      left: 60, 
+      right: 30, 
+      top: 30, 
+      bottom: 50,
+      containLabel: true  // 确保标签在范围内
+    },
     xAxis: {
       type: 'category',
       data: dates,
-      boundaryGap: false, // 始终设置为false，让折线从坐标轴开始
+      boundaryGap: false,
       axisLine: { lineStyle: { color: '#e5e7eb' } },
       axisLabel: { 
         fontSize: 12, 
         color: '#6b7280',
-        rotate: dates.length > 5 ? 30 : 0
+        rotate: dates.length > 5 ? 30 : 0,
+        interval: 0  // 显示所有标签，不跳过
+      },
+      axisTick: {
+        alignWithLabel: true  // 刻度线与标签对齐
       }
     },
     yAxis: {
@@ -300,16 +320,16 @@ const renderChart = () => {
         color: '#6b7280',
         formatter: '¥{value}'
       },
-      scale: true, // 自动调整范围
-      minInterval: 1 // 最小间隔
+      scale: true,
+      minInterval: 1
     },
     series: [
       {
         data: prices,
         type: 'line',
-        smooth: false, // 改为false，避免单点或双点时的渲染问题
+        smooth: dates.length > 2,  // 只有超过2个点时才平滑
         showSymbol: true,
-        symbolSize: 8, // 统一大小，确保可见
+        symbolSize: dates.length <= 2 ? 10 : 8,  // 数据点少时显示更大
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(37, 99, 235, 0.2)' },
@@ -326,7 +346,7 @@ const renderChart = () => {
           color: '#fff'
         },
         label: {
-          show: true, // 始终显示标签
+          show: dates.length <= 7, // 只在7天以内显示数值标签
           position: 'top',
           formatter: '¥{c}',
           color: '#2563eb',
@@ -340,10 +360,14 @@ const renderChart = () => {
   console.log('[DEBUG] Setting chart option:', option)
   
   try {
-    chartInstance.clear() // 清除旧图表
-    chartInstance.setOption(option, true)
-    chartInstance.resize() // 强制调整大小
+    // 直接设置新配置（已经是新实例，无需clear）
+    chartInstance.setOption(option)
     console.log('[DEBUG] Chart rendered successfully')
+    
+    // 延迟调整大小，确保DOM已更新
+    setTimeout(() => {
+      chartInstance?.resize()
+    }, 100)
   } catch (error) {
     console.error('[DEBUG] Error rendering chart:', error)
   }
@@ -479,59 +503,6 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section class="panel">
-      <h2>以旧换新最新政策</h2>
-      
-      <!-- 政策搜索 -->
-      <div class="search-box policy-search">
-        <div class="search-input-wrapper">
-          <input 
-            v-model="policySearchKeyword" 
-            type="text" 
-            placeholder="搜索政策：输入政策标题、内容关键词..."
-            @keyup.enter="searchPolicies"
-            class="search-input"
-          />
-          <button @click="searchPolicies" class="search-btn" :disabled="searchingPolicies">
-            {{ searchingPolicies ? '搜索中...' : '🔍 搜索' }}
-          </button>
-          <button v-if="policySearchKeyword" @click="clearPolicySearch" class="clear-btn">✕</button>
-        </div>
-        <div v-if="policySearchKeyword && policies.length === 0 && !searchingPolicies" class="search-empty">
-          未找到匹配的政策，请尝试其他关键词
-        </div>
-      </div>
-
-      <div class="policy-layout">
-        <aside class="policy-list">
-          <div
-            v-for="policy in policies"
-            :key="policy.id"
-            :class="['policy-item', { active: activePolicy && policy.id === activePolicy.id }]"
-            @click="activePolicy = policy"
-          >
-            <div class="policy-title">{{ policy.title }}</div>
-            <div class="policy-date">{{ policy.publish_date }}</div>
-          </div>
-        </aside>
-        <article class="policy-reader">
-          <template v-if="activePolicy">
-            <h3>{{ activePolicy.title }}</h3>
-            <div class="policy-meta">发布日期：{{ activePolicy.publish_date }}</div>
-            <div v-if="activePolicy.attachment_url" class="policy-file">
-              <a :href="activePolicy.attachment_url" target="_blank" rel="noreferrer">📥 下载政策附件</a>
-            </div>
-            <div v-if="activePolicy.attachment_url && activePolicy.attachment_url.endsWith('.pdf')" class="pdf-preview">
-              <iframe :src="activePolicy.attachment_url" title="政策附件"></iframe>
-            </div>
-            <div v-if="activePolicy.content" class="policy-content">{{ activePolicy.content }}</div>
-            <div v-else-if="!activePolicy.attachment_url" class="empty">暂无文字内容，请查看附件。</div>
-          </template>
-          <div v-else class="empty">暂无政策信息</div>
-        </article>
-      </div>
-    </section>
-
     <!-- AI问答区域 -->
     <section class="panel ai-panel">
       <div class="ai-header">
@@ -617,6 +588,59 @@ onUnmounted(() => {
       <div class="ai-notice">
         <span class="notice-icon">ℹ️</span>
         AI回答仅供参考，具体政策以官方文件为准。
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>以旧换新最新政策</h2>
+      
+      <!-- 政策搜索 -->
+      <div class="search-box policy-search">
+        <div class="search-input-wrapper">
+          <input 
+            v-model="policySearchKeyword" 
+            type="text" 
+            placeholder="搜索政策：输入政策标题、内容关键词..."
+            @keyup.enter="searchPolicies"
+            class="search-input"
+          />
+          <button @click="searchPolicies" class="search-btn" :disabled="searchingPolicies">
+            {{ searchingPolicies ? '搜索中...' : '🔍 搜索' }}
+          </button>
+          <button v-if="policySearchKeyword" @click="clearPolicySearch" class="clear-btn">✕</button>
+        </div>
+        <div v-if="policySearchKeyword && policies.length === 0 && !searchingPolicies" class="search-empty">
+          未找到匹配的政策，请尝试其他关键词
+        </div>
+      </div>
+
+      <div class="policy-layout">
+        <aside class="policy-list">
+          <div
+            v-for="policy in policies"
+            :key="policy.id"
+            :class="['policy-item', { active: activePolicy && policy.id === activePolicy.id }]"
+            @click="activePolicy = policy"
+          >
+            <div class="policy-title">{{ policy.title }}</div>
+            <div class="policy-date">{{ policy.publish_date }}</div>
+          </div>
+        </aside>
+        <article class="policy-reader">
+          <template v-if="activePolicy">
+            <h3>{{ activePolicy.title }}</h3>
+            <div class="policy-meta">发布日期：{{ activePolicy.publish_date }}</div>
+            <div v-if="activePolicy.attachment_url" class="policy-file">
+              <a :href="activePolicy.attachment_url" target="_blank" rel="noreferrer">📥 下载政策附件</a>
+            </div>
+            <div v-if="activePolicy.attachment_url && activePolicy.attachment_url.endsWith('.pdf')" class="pdf-preview">
+              <iframe :src="activePolicy.attachment_url" title="政策附件"></iframe>
+            </div>
+            <div v-if="activePolicy.content" class="policy-content">{{ activePolicy.content }}</div>
+            <div v-else-if="!activePolicy.attachment_url" class="empty">暂无文字内容，请查看附件。</div>
+          </template>
+          <div v-else class="empty">暂无政策信息</div>
+        </article>
       </div>
     </section>
   </div>

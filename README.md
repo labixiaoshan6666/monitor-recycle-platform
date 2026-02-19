@@ -174,14 +174,33 @@ python run_daily_crawl.py
 
 ## 📦 生产部署
 
-部署到生产环境的详细步骤：
+### 部署方式选择
 
-1. 修改 `.env` 配置为生产环境
-2. 构建前端: `npm run build`
-3. 配置 Gunicorn + Nginx
-4. 设置爬虫定时任务
+| 方式 | 文档 | 适用场景 | 耗时 |
+|------|------|----------|------|
+| 🎯 **宝塔面板** | [BAOTA_DEPLOY.md](./BAOTA_DEPLOY.md) | 腾讯云/阿里云 + 宝塔 | 30分钟 |
+| ⚡ **快速部署** | [QUICK_DEPLOY.md](./QUICK_DEPLOY.md) | 快速上手 | 5-30分钟 |
+| 🚀 **完整部署** | [DEPLOYMENT.md](./DEPLOYMENT.md) | 手动配置服务器 | 30-60分钟 |
 
-详见部署脚本 `deploy.sh`
+### 快速命令
+
+**本地开发（Windows）**：
+```bash
+start.bat
+```
+
+**本地开发（macOS/Linux）**：
+```bash
+./recycle_platform/start.sh
+```
+
+**宝塔面板部署**：
+查看 [宝塔部署指南](./BAOTA_DEPLOY.md)
+
+**服务器自动部署**：
+```bash
+sudo bash deploy.sh
+```
 
 
  

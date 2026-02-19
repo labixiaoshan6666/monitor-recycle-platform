@@ -1,4 +1,14 @@
 # Gunicorn 配置文件
+# 
+# 注意：如果使用宝塔面板部署，此文件会被忽略
+# 宝塔会使用自己生成的配置：/www/server/pyproject_manager/versions/3.9/gunicorn_config.py
+# 
+# 此文件适用于：
+# - 手动部署（不使用宝塔）
+# - Docker部署
+# - 使用 deploy.sh 自动部署脚本
+# - 其他云平台部署
+
 import multiprocessing
 import os
 
@@ -21,9 +31,16 @@ timeout = 300
 keepalive = 2
 graceful_timeout = 30
 
-# 日志配置
-accesslog = '/var/log/gunicorn/access.log'
-errorlog = '/var/log/gunicorn/error.log'
+# 日志配置 - 使用相对路径，避免权限问题
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+
+# 确保日志目录存在
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+accesslog = os.path.join(LOG_DIR, 'access.log')
+errorlog = os.path.join(LOG_DIR, 'error.log')
 loglevel = 'info'
 
 # 进程命名

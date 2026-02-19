@@ -58,7 +58,7 @@ python manage.py migrate
 python manage.py createsuperuser
 
 # 导入示例数据
-python ..\\init_data.py
+python init_data.py
 
 # 启动后端
 python manage.py runserver
